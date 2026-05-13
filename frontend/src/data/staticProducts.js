@@ -1,0 +1,68 @@
+const staticProducts = [
+  {
+    _id: "1",
+    name: "Men's Casual T-Shirt",
+    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
+    price: 499,
+    brand: "H&M",
+    category: "clothing",
+  },
+  {
+    _id: "2",
+    name: "Women's Summer Dress",
+    image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c",
+    price: 899,
+    brand: "Zara",
+    category: "clothing",
+  },
+  {
+    _id: "3",
+    name: "Men's Denim Jacket",
+    image: "https://images.unsplash.com/photo-1520975922203-b7b2a2b1c9c7",
+    price: 1499,
+    brand: "Levi's",
+    category: "clothing",
+  },
+  {
+    _id: "4",
+    name: "Women's Hoodie",
+    image: "https://images.unsplash.com/photo-1551028719-00167b16eac5",
+    price: 799,
+    brand: "Nike",
+    category: "clothing",
+  },
+  {
+    _id: "5",
+    name: "Men's Formal Shirt",
+    image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf",
+    price: 699,
+    brand: "Allen Solly",
+    category: "clothing",
+  },
+  {
+    _id: "6",
+    name: "Women's Jeans",
+    image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246",
+    price: 999,
+    brand: "Levi's",
+    category: "clothing",
+  },
+  {
+    _id: "7",
+    name: "Men's Track Pants",
+    image: "https://images.unsplash.com/photo-1593030761757-71fae45fa0e7",
+    price: 599,
+    brand: "Adidas",
+    category: "clothing",
+  },
+  {
+    _id: "8",
+    name: "Women's Kurti",
+    image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990",
+    price: 749,
+    brand: "Biba",
+    category: "clothing",
+  },
+];
+
+export default staticProducts;

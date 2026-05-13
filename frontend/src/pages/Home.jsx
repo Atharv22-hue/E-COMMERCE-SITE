@@ -4,10 +4,14 @@ import Loader from "../components/Loader";
 import Message from "../components/Message";
 import Header from "../components/Header";
 import Product from "./Products/Product";
+import staticProducts from "../data/staticProducts";
 
 const Home = () => {
   const { keyword } = useParams();
   const { data, isLoading, isError } = useGetProductsQuery({ keyword });
+
+  const productsToShow =
+  data?.products?.length > 0 ? data.products : staticProducts;
 
   return (
     <>
@@ -35,11 +39,18 @@ const Home = () => {
 
           <div>
             <div className="flex justify-center flex-wrap mt-[2rem]">
-              {data.products.map((product) => (
+              {/* {data.products.map((product) => (
                 <div key={product._id}>
                   <Product product={product} />
                 </div>
-              ))}
+              ))} */}
+
+              {productsToShow.map((product) => (
+  <div key={product._id}>
+    <Product product={product} />
+  </div>
+))}
+              
             </div>
           </div>
         </>

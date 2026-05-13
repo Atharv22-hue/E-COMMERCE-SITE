@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useGetFilteredProductsQuery } from "../redux/api/productApiSlice";
 import { useFetchCategoriesQuery } from "../redux/api/categoryApiSlice";
@@ -8,177 +8,195 @@ import {
   setProducts,
   setChecked,
 } from "../redux/features/shop/shopSlice";
+
 import Loader from "../components/Loader";
 import ProductCard from "./Products/ProductCard";
+import Message from "../components/Message";
+import staticProducts from "../data/staticProducts";
 
 const Shop = () => {
   const dispatch = useDispatch();
-  const { categories, products, checked, radio } = useSelector(
+
+  const { categories, products, checked } = useSelector(
     (state) => state.shop
   );
 
-  const categoriesQuery = useFetchCategoriesQuery();
   const [priceFilter, setPriceFilter] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState("");
 
-  const filteredProductsQuery = useGetFilteredProductsQuery({
-    checked,
-    radio,
-  });
+  // API Calls
+  const { data: categoriesData, isLoading: catLoading } =
+    useFetchCategoriesQuery();
 
+  const { data: productsData, isLoading: prodLoading } =
+    useGetFilteredProductsQuery({ checked });
+
+  // ✅ Use API data OR fallback to static
+  const allProducts = productsData?.length
+    ? productsData
+    : staticProducts;
+
+  // ✅ Set categories (optional fallback too)
   useEffect(() => {
-    if (!categoriesQuery.isLoading) {
-      dispatch(setCategories(categoriesQuery.data));
+    if (categoriesData) {
+      dispatch(setCategories(categoriesData));
     }
-  }, [categoriesQuery.data, dispatch]);
+  }, [categoriesData, dispatch]);
 
+  // ✅ FILTER LOGIC (works on static + API)
+  const filteredProducts = useMemo(() => {
+    if (!allProducts) return [];
+
+    return allProducts.filter((product) => {
+      const matchCategory =
+        checked.length === 0 ||
+        checked.includes(product.category);
+
+      const matchBrand =
+        !selectedBrand || product.brand === selectedBrand;
+
+      const matchPrice =
+        !priceFilter || product.price <= Number(priceFilter);
+
+      return matchCategory && matchBrand && matchPrice;
+    });
+  }, [allProducts, checked, selectedBrand, priceFilter]);
+
+  // ✅ Update Redux
   useEffect(() => {
-    if (!checked.length || !radio.length) {
-      if (!filteredProductsQuery.isLoading) {
-        // Filter products based on both checked categories and price filter
-        const filteredProducts = filteredProductsQuery.data.filter(
-          (product) => {
-            // Check if the product price includes the entered price filter value
-            return (
-              product.price.toString().includes(priceFilter) ||
-              product.price === parseInt(priceFilter, 10)
-            );
-          }
-        );
+    dispatch(setProducts(filteredProducts));
+  }, [filteredProducts, dispatch]);
 
-        dispatch(setProducts(filteredProducts));
-      }
-    }
-  }, [checked, radio, filteredProductsQuery.data, dispatch, priceFilter]);
-
-  const handleBrandClick = (brand) => {
-    const productsByBrand = filteredProductsQuery.data?.filter(
-      (product) => product.brand === brand
-    );
-    dispatch(setProducts(productsByBrand));
-  };
-
+  // CATEGORY CHECK
   const handleCheck = (value, id) => {
     const updatedChecked = value
       ? [...checked, id]
       : checked.filter((c) => c !== id);
+
     dispatch(setChecked(updatedChecked));
   };
 
-  // Add "All Brands" option to uniqueBrands
-  const uniqueBrands = [
-    ...Array.from(
-      new Set(
-        filteredProductsQuery.data
-          ?.map((product) => product.brand)
-          .filter((brand) => brand !== undefined)
-      )
-    ),
-  ];
+  // UNIQUE BRANDS (from all products)
+  const uniqueBrands = useMemo(() => {
+    return [
+      ...new Set(
+        allProducts?.map((p) => p.brand).filter(Boolean)
+      ),
+    ];
+  }, [allProducts]);
 
-  const handlePriceChange = (e) => {
-    // Update the price filter state when the user types in the input filed
-    setPriceFilter(e.target.value);
+  // RESET
+  const handleReset = () => {
+    dispatch(setChecked([]));
+    setSelectedBrand("");
+    setPriceFilter("");
   };
 
+  // LOADING STATE (only show if both empty)
+  if (prodLoading && !staticProducts.length) return <Loader />;
+
   return (
-    <>
-      <div className="container mx-auto">
-        <div className="flex md:flex-row">
-          <div className="bg-[#151515] p-3 mt-2 mb-2">
-            <h2 className="h4 text-center py-2 bg-black rounded-full mb-2">
-              Filter by Categories
-            </h2>
+    <div className="container mx-auto">
+      <div className="flex md:flex-row">
 
-            <div className="p-5 w-[15rem]">
-              {categories?.map((c) => (
-                <div key={c._id} className="mb-2">
-                  <div className="flex ietms-center mr-4">
-                    <input
-                      type="checkbox"
-                      id="red-checkbox"
-                      onChange={(e) => handleCheck(e.target.checked, c._id)}
-                      className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500 dark:focus:ring-pink-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                    />
+        {/* FILTER PANEL */}
+        <div className="bg-[#151515] p-3 mt-2 mb-2">
 
-                    <label
-                      htmlFor="pink-checkbox"
-                      className="ml-2 text-sm font-medium text-white dark:text-gray-300"
-                    >
-                      {c.name}
-                    </label>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* CATEGORY */}
+          <h2 className="text-center py-2 bg-black rounded-full mb-2">
+            Filter by Categories
+          </h2>
 
-            <h2 className="h4 text-center py-2 bg-black rounded-full mb-2">
-              Filter by Brands
-            </h2>
-
-            <div className="p-5">
-              {uniqueBrands?.map((brand) => (
-                <>
-                  <div className="flex items-enter mr-4 mb-5">
-                    <input
-                      type="radio"
-                      id={brand}
-                      name="brand"
-                      onChange={() => handleBrandClick(brand)}
-                      className="w-4 h-4 text-pink-400 bg-gray-100 border-gray-300 focus:ring-pink-500 dark:focus:ring-pink-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                    />
-
-                    <label
-                      htmlFor="pink-radio"
-                      className="ml-2 text-sm font-medium text-white dark:text-gray-300"
-                    >
-                      {brand}
-                    </label>
-                  </div>
-                </>
-              ))}
-            </div>
-
-            <h2 className="h4 text-center py-2 bg-black rounded-full mb-2">
-              Filer by Price
-            </h2>
-
-            <div className="p-5 w-[15rem]">
-              <input
-                type="text"
-                placeholder="Enter Price"
-                value={priceFilter}
-                onChange={handlePriceChange}
-                className="w-full px-3 py-2 placeholder-gray-400 border rounded-lg focus:outline-none focus:ring focus:border-pink-300"
-              />
-            </div>
-
-            <div className="p-5 pt-0">
-              <button
-                className="w-full border my-4"
-                onClick={() => window.location.reload()}
-              >
-                Reset
-              </button>
-            </div>
+          <div className="p-5 w-[15rem]">
+            {categories?.map((c) => (
+              <div key={c._id} className="mb-2 flex items-center">
+                <input
+                  type="checkbox"
+                  onChange={(e) =>
+                    handleCheck(e.target.checked, c._id)
+                  }
+                  className="mr-2"
+                />
+                <label className="text-white">{c.name}</label>
+              </div>
+            ))}
           </div>
 
-          <div className="p-3">
-            <h2 className="h4 text-center mb-2">{products?.length} Products</h2>
-            <div className="flex flex-wrap">
-              {products.length === 0 ? (
-                <Loader />
-              ) : (
-                products?.map((p) => (
-                  <div className="p-3" key={p._id}>
-                    <ProductCard p={p} />
-                  </div>
-                ))
-              )}
+          {/* BRAND */}
+          <h2 className="text-center py-2 bg-black rounded-full mb-2">
+            Filter by Brands
+          </h2>
+
+          <div className="p-5">
+            <div className="mb-3">
+              <input
+                type="radio"
+                name="brand"
+                checked={!selectedBrand}
+                onChange={() => setSelectedBrand("")}
+              />
+              <label className="ml-2 text-white">All</label>
             </div>
+
+            {uniqueBrands.map((brand) => (
+              <div key={brand} className="mb-3 flex items-center">
+                <input
+                  type="radio"
+                  name="brand"
+                  onChange={() => setSelectedBrand(brand)}
+                />
+                <label className="ml-2 text-white">{brand}</label>
+              </div>
+            ))}
+          </div>
+
+          {/* PRICE */}
+          <h2 className="text-center py-2 bg-black rounded-full mb-2">
+            Filter by Price
+          </h2>
+
+          <div className="p-5 w-[15rem]">
+            <input
+              type="number"
+              placeholder="Max Price"
+              value={priceFilter}
+              onChange={(e) => setPriceFilter(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg"
+            />
+          </div>
+
+          {/* RESET */}
+          <div className="p-5 pt-0">
+            <button
+              className="w-full border py-2 bg-pink-600"
+              onClick={handleReset}
+            >
+              Reset Filters
+            </button>
           </div>
         </div>
+
+        {/* PRODUCTS */}
+        <div className="p-3 w-full">
+          <h2 className="text-center mb-4 text-xl">
+            {products.length} Products
+          </h2>
+
+          <div className="flex flex-wrap">
+            {products.length === 0 ? (
+              <Message>No products found</Message>
+            ) : (
+              products.map((p) => (
+                <div className="p-3" key={p._id}>
+                  <ProductCard p={p} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
       </div>
-    </>
+    </div>
   );
 };
 
