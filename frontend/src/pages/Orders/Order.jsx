@@ -79,7 +79,7 @@ const Order = () => {
   }
 
   function onError(err) {
-    toast.error(err.message);
+    toast.error(err?.message || "Payment error occurred");
   }
 
   const deliverHandler = async () => {
@@ -90,7 +90,7 @@ const Order = () => {
   return isLoading ? (
     <Loader />
   ) : error ? (
-    <Messsage variant="danger">{error.data.message}</Messsage>
+    <Messsage variant="danger">{error?.data?.message || error?.message || "Something went wrong"}</Messsage>
   ) : (
     <div className="container flex flex-col ml-[10rem] md:flex-row">
       <div className="md:w-2/3 pr-4">

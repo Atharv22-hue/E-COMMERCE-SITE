@@ -19,6 +19,7 @@ const Login = () => {
 
   const { search } = useLocation();
   const sp = new URLSearchParams(search);
+
   const redirect = sp.get("redirect") || "/";
 
   useEffect(() => {
@@ -29,13 +30,28 @@ const Login = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await login({ email, password }).unwrap();
-      console.log(res);
+      const res = await login({
+        email,
+        password,
+      }).unwrap();
+
       dispatch(setCredentials({ ...res }));
+
+      toast.success("Login Successful");
+
       navigate(redirect);
     } catch (err) {
-      toast.error(err?.data?.message || err.error);
+      console.log("LOGIN ERROR:", err);
+
+      const errorMessage =
+        err?.data?.message ||
+        err?.message ||
+        err?.error ||
+        "Login Failed";
+
+      toast.error(errorMessage);
     }
   };
 
@@ -43,9 +59,15 @@ const Login = () => {
     <div>
       <section className="pl-[10rem] flex flex-wrap">
         <div className="mr-[4rem] mt-[5rem]">
-          <h1 className="text-2xl font-semibold mb-4">Sign In</h1>
+          <h1 className="text-2xl font-semibold mb-4 text-white">
+            Sign In
+          </h1>
 
-          <form onSubmit={submitHandler} className="container w-[40rem]">
+          <form
+            onSubmit={submitHandler}
+            className="container w-[40rem]"
+          >
+            {/* Email */}
             <div className="my-[2rem]">
               <label
                 htmlFor="email"
@@ -53,16 +75,19 @@ const Login = () => {
               >
                 Email Address
               </label>
+
               <input
                 type="email"
                 id="email"
-                className="mt-1 p-2 border rounded w-full"
+                className="mt-1 p-2 border rounded w-full text-black"
                 placeholder="Enter email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
 
+            {/* Password */}
             <div className="mb-4">
               <label
                 htmlFor="password"
@@ -70,20 +95,23 @@ const Login = () => {
               >
                 Password
               </label>
+
               <input
                 type="password"
                 id="password"
-                className="mt-1 p-2 border rounded w-full"
+                className="mt-1 p-2 border rounded w-full text-black"
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
 
+            {/* Button */}
             <button
               disabled={isLoading}
               type="submit"
-              className="bg-pink-500 text-white px-4 py-2 rounded cursor-pointer my-[1rem]"
+              className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded cursor-pointer my-[1rem]"
             >
               {isLoading ? "Signing In..." : "Sign In"}
             </button>
@@ -91,11 +119,16 @@ const Login = () => {
             {isLoading && <Loader />}
           </form>
 
+          {/* Register */}
           <div className="mt-4">
             <p className="text-white">
               New Customer?{" "}
               <Link
-                to={redirect ? `/register?redirect=${redirect}` : "/register"}
+                to={
+                  redirect
+                    ? `/register?redirect=${redirect}`
+                    : "/register"
+                }
                 className="text-pink-500 hover:underline"
               >
                 Register
@@ -103,9 +136,11 @@ const Login = () => {
             </p>
           </div>
         </div>
+
+        {/* Image */}
         <img
-          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1964&q=80"
-          alt=""
+          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1964&q=80"
+          alt="login"
           className="h-[65rem] w-[59%] xl:block md:hidden sm:hidden rounded-lg"
         />
       </section>
